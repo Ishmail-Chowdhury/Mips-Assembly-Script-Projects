@@ -19,88 +19,51 @@ finish: j finish # infinite loop after displaying the results
 ## Output: $v0 - the quotient
 ##         $v1 - the remainder
 
-division: add $v0, $zero, $a0       #v0 = quotient = a0
-addi $v1, $zero, 0                  #v1 = remainder = 0
-addi $t6, $a0, 0                    #t6 = prevremainder = dividend
-add $t1, $zero, $a1                 #t1 = divisor = a1
+division: addi $v0, $a0, 0          # Q = dividend
+addi $v1, $zero, 0                  # A = remainder = 0
+addi $t1, $a1, 0                    # M = divisor
 
-lui $t8, 32768                      #load 1 into bit 31 
-and $t5, $t8, $v0                   #check if a0 is neg
-srl $t5, $t5, 31                    #1 or 0
+lui  $t8, 32768                      # 0x80000000 mask
+and  $t5, $a0, $t8                   # dividend sign
+srl  $t5, $t5, 31                    # 1 if negative
+and  $t4, $a1, $t8                   # divisor sign
+srl  $t4, $t4, 31                    # 1 if negative
+xor  $t7, $t5, $t4                   # quotient sign
+addi $t6, $t5, 0                     # remainder sign (same as dividend)
 
-and $t4, $t8, $a1                   #check if a1 is negative 
-srl $t4, $t4, 31                    #1 or 0
+beq  $t5, $zero, absDivisor
+nor  $v0, $v0, $zero                 # abs(dividend)
+addi $v0, $v0, 1
 
-beq $t5, $t4, postive               #11 or 00, postive 
-beq $t5, $zero, negdivisor          #if t5 (v0) is postive, divisor is negative 
-bne $t5, $zero, negdividend            
-
-negdivisor: nor $t1, $t1, $zero
+absDivisor: beq  $t4, $zero, prepLoop
+nor  $t1, $t1, $zero                 # abs(divisor)
 addi $t1, $t1, 1
-addi $t5, $zero, 1
-j skip
 
-postive: beq $t5, $zero, skip
-nor $t1, $t1, $zero
-addi $t1, $t1, 1
-nor $v0, $v0, $zero
-addi $v0, $v0, 1
-addi $t5, $zero, 0
-j skip
+prepLoop: addi $t9, $zero, 32        # iteration counter
 
-negdividend: nor $v0, $v0, $zero                 #if negative make pos
-addi $v0, $v0, 1
-
-skip: addi $t9, $t9, 33                   #iteration counter
-
-loop: beq $t9, $zero, lastop        #i<30, then j to lastop
-
-
-sub $v1, $v1, $t1                #Rem = Rem - Div
-slt $t2, $v1, $zero              #if Rem < 0
-bne $t2, $zero, lt0
-beq $t2, $zero, gte0
-
-gte0: and $t7, $v0, $t8              #t7 = find the highest bit value of v0  (1 or 0)
-srl $t7, $t7, 31                #shift 31 bits
-sll $v0, $v0, 1                 # shift left quotient
-addi $v0, $v0, 1
-beq $t7, $zero, shift0          # t7 = 0 shift 0 in remainder
-bne $t7, $zero, shift1          # t7 = 0 shift 1 in remainder 
-
-
-
-lt0: add $v1, $v1, $t1          #restore v1
-and $t7, $v0, $t8               #t7 = find the highest bit value of v0  (1 or 0)
-srl $t7, $t7, 31                #shift 31 bits
-sll $v0, $v0, 1                 # shift left quotient
-beq $t7, $zero, shift0          # t7 = 0 shift 0 in remainder
-bne $t7, $zero, shift1          # t7 = 0 shift 1 in remainder 
-
-shift0: addi $t6, $v1, 0
-sll $v1, $v1, 1
+loop: beq  $t9, $zero, applySigns
+and  $t2, $v0, $t8                   # capture Q31
+srl  $t2, $t2, 31
+sll  $v1, $v1, 1                     # A <<= 1
+or   $v1, $v1, $t2                   # A[0] = old Q31
+sll  $v0, $v0, 1                     # Q <<= 1
+sub  $v1, $v1, $t1                   # A = A - M
+slt  $t3, $v1, $zero
+bne  $t3, $zero, restore
+ori  $v0, $v0, 1                     # Q0 = 1
 addi $t9, $t9, -1
 j loop
 
-shift1: addi $t6, $v1, 0
-sll $v1, $v1, 1
-addi $v1, $v1, 1
+restore: add  $v1, $v1, $t1          # restore A, Q0 remains 0
 addi $t9, $t9, -1
 j loop
 
-lastop: addi $v1, $t6, 0
-beq $t5, $zero, exit
-bne $t5, $zero, flip+1
-
-flip+1: nor $v0, $v0, $zero
+applySigns: beq  $t7, $zero, remSign
+nor  $v0, $v0, $zero                 # apply quotient sign
 addi $v0, $v0, 1
-and $s0, $t8, $a1                   #check if a1 is negative 
-srl $s0, $s0, 31                    #1 or 0
 
-bne $s0, $zero, exit
-
-nor $v1, $v1, $zero
+remSign: beq  $t6, $zero, exit
+nor  $v1, $v1, $zero                 # apply remainder sign
 addi $v1, $v1, 1
-j exit
 
 exit: jr $ra
