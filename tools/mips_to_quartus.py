@@ -118,7 +118,11 @@ def parse_immediate(token: str, labels: dict[str, int], current_address: int) ->
         return int(token, 16)
     if token.lower().startswith("0b") or token.lower().startswith("-0b"):
         return int(token, 2)
-    return int(token, 10)
+    try:
+        return int(token, 10)
+    except ValueError as exc:
+        raise AssemblyError(f"Unknown label or invalid immediate '{token}'") from exc
+
 
 
 def to_u16(value: int, context: str) -> int:
