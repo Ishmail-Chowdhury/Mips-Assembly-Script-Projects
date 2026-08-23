@@ -47,7 +47,7 @@ REGISTER_ALIASES = {
 
 REGISTER_ALIASES.update({name[1:]: value for name, value in list(REGISTER_ALIASES.items())})
 
-LABEL_PATTERN = re.compile(r"^([A-Za-z_.$][A-Za-z0-9_.$+-]*):")
+LABEL_PATTERN = re.compile(r"^([A-Za-z_.$][A-Za-z0-9_.$+\-]*):")
 MEMORY_OPERAND_PATTERN = re.compile(r"^\s*([^()]+)\((\$[A-Za-z0-9]+)\)\s*$")
 
 R_TYPE_FUNCTS = {
