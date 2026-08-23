@@ -13,8 +13,8 @@ module mips32_dual_port_ram #(
     reg [31:0] memory [0:WORDS-1];
     integer i;
 
-    wire [31:0] instr_index = instr_addr[31:2];
-    wire [31:0] data_index = data_addr[31:2];
+    wire [29:0] instr_index = instr_addr[31:2];
+    wire [29:0] data_index = data_addr[31:2];
 
     assign instr_data = (instr_index < WORDS) ? memory[instr_index] : 32'b0;
     assign data_rdata = (data_index < WORDS) ? memory[data_index] : 32'b0;
