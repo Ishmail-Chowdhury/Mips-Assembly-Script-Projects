@@ -38,3 +38,8 @@ Typical Quartus flow:
 1. Run `tools/mips_to_quartus.py` on one of the `.asm` files.
 2. Point `rtl/mips32_system.v` at the generated `.hex` file through the `INIT_FILE` parameter.
 3. Simulate or synthesize the design in Quartus and monitor the exported debug signals (`debug_pc`, `debug_instruction`, `debug_reg_v0`, `debug_reg_v1`, and related register outputs).
+
+Additional integration files:
+
+- `rtl/mips32_system_tb.v`: simple testbench for simulation with cycle-by-cycle `pc`, `v0`, and `v1` visibility.
+- `rtl/mips32_top_wrapper.v`: top-level wrapper that exposes `debug_pc`, `debug_v0`, and `debug_v1` for simulation/FPGA debug integration.
