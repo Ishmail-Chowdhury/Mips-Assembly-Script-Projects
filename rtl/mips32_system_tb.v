@@ -58,7 +58,7 @@ module mips32_system_tb;
             if (cycles >= MAX_CYCLES) begin
                 $display("Timeout after %0d cycles", cycles);
                 $display("pc=0x%08h v0=0x%08h v1=0x%08h", debug_pc, debug_reg_v0, debug_reg_v1);
-                $stop;
+                $finish;
             end
         end
     end
