@@ -256,10 +256,14 @@ def encode_line(source: SourceLine, labels: dict[str, int]) -> int:
             raise AssemblyError(f"{source.path}:{source.line_number}: {mnemonic} expects rs, rt, label")
         rs = parse_register(operands[0])
         rt = parse_register(operands[1])
-        target = parse_immediate(operands[2], labels, source.address)
-        offset = (target - (source.address + 4)) // 4
-        if (target - (source.address + 4)) % 4 != 0:
-            raise AssemblyError(f"{source.path}:{source.line_number}: branch target is not word aligned")
+        if operands[2] in labels:
+            target = labels[operands[2]]
+            offset_bytes = target - (source.address + 4)
+            if offset_bytes % 4 != 0:
+                raise AssemblyError(f"{source.path}:{source.line_number}: branch target is not word aligned")
+            offset = offset_bytes // 4
+        else:
+            offset = parse_immediate(operands[2], labels, source.address)
         return encode_i(I_TYPE_OPCODES[mnemonic], rs, rt, to_u16(offset, mnemonic))
 
     if mnemonic in {"j", "jal"}:
